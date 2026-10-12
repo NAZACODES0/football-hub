@@ -4,6 +4,8 @@
   "scripts": {
     "dev:web": "pnpm --filter web dev",
     "dev:api": "pnpm --filter api dev",
+    "sync": "pnpm --filter api exec tsx src/sync/run.ts",
+    "worker": "pnpm --filter api exec tsx src/worker.ts",
     "format": "prettier --write ."
   },
   "devDependencies": {
