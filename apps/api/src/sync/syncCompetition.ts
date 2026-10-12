@@ -10,7 +10,7 @@ type MatchStatusValue =
   | "CANCELLED";
 
 // Translate football-data.org statuses into our own enum.
-function mapStatus(status: string): MatchStatusValue {
+export function mapStatus(status: string): MatchStatusValue {
   switch (status) {
     case "IN_PLAY":
       return "LIVE";

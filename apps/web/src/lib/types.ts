@@ -62,3 +62,11 @@ export interface StandingsResponse {
   season: number | null;
   table: StandingRow[];
 }
+
+export interface MatchUpdate {
+  id: number;
+  status: MatchStatus;
+  homeScore: number | null;
+  awayScore: number | null;
+  minute: number | null;
+}

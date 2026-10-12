@@ -22,6 +22,10 @@ export function StatusLabel({ match }: { match: Match }) {
     case "CANCELLED":
       return <span className="text-xs font-semibold text-red-400">Cancelled</span>;
     default:
-      return <span className="text-xs text-slate-400">{formatKickoff(match.kickoffAt)}</span>;
+      return (
+        <span suppressHydrationWarning className="text-xs text-slate-400">
+          {formatKickoff(match.kickoffAt)}
+        </span>
+      );
   }
 }

@@ -1,10 +1,15 @@
+"use client";
+
 import Link from "next/link";
 import type { Match } from "@/lib/types";
 import { scoreText } from "@/lib/format";
+import { useLiveMatch } from "@/lib/useLiveMatch";
 import { Crest } from "./Crest";
 import { StatusLabel } from "./StatusLabel";
 
-export function MatchCard({ match }: { match: Match }) {
+export function MatchCard({ match: initial }: { match: Match }) {
+  const match = useLiveMatch(initial);
+
   return (
     <Link
       href={`/matches/${match.id}`}

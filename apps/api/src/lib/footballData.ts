@@ -93,3 +93,8 @@ export const getStandings = (code: string) =>
 
 export const getMatches = (code: string) =>
   request<{ matches: FdMatch[] }>(`/competitions/${code}/matches`);
+
+export const getMatchesByDate = (code: string, dateFrom: string, dateTo: string) =>
+  request<{ matches: FdMatch[] }>(
+    `/competitions/${code}/matches?dateFrom=${dateFrom}&dateTo=${dateTo}`,
+  );
