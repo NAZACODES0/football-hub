@@ -1,0 +1,103 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum MatchStatus {
+  SCHEDULED
+  LIVE
+  PAUSED
+  FINISHED
+  POSTPONED
+  CANCELLED
+}
+
+enum EventType {
+  GOAL
+  OWN_GOAL
+  PENALTY
+  YELLOW_CARD
+  RED_CARD
+  SUBSTITUTION
+}
+
+model Competition {
+  id         Int        @id @default(autoincrement())
+  externalId Int        @unique
+  name       String
+  code       String?
+  country    String?
+  logoUrl    String?
+  matches    Match[]
+  standings  Standing[]
+}
+
+model Team {
+  id          Int          @id @default(autoincrement())
+  externalId  Int          @unique
+  name        String
+  shortName   String?
+  crestUrl    String?
+  homeMatches Match[]      @relation("HomeTeam")
+  awayMatches Match[]      @relation("AwayTeam")
+  standings   Standing[]
+  events      MatchEvent[]
+}
+
+model Match {
+  id            Int          @id @default(autoincrement())
+  externalId    Int          @unique
+  competitionId Int
+  competition   Competition  @relation(fields: [competitionId], references: [id])
+  homeTeamId    Int
+  homeTeam      Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeamId    Int
+  awayTeam      Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  kickoffAt     DateTime
+  status        MatchStatus  @default(SCHEDULED)
+  homeScore     Int?
+  awayScore     Int?
+  minute        Int?
+  events        MatchEvent[]
+
+  @@index([kickoffAt])
+  @@index([status])
+  @@index([competitionId])
+}
+
+model MatchEvent {
+  id         Int       @id @default(autoincrement())
+  matchId    Int
+  match      Match     @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  teamId     Int?
+  team       Team?     @relation(fields: [teamId], references: [id])
+  type       EventType
+  minute     Int
+  playerName String?
+
+  @@index([matchId])
+}
+
+model Standing {
+  id             Int         @id @default(autoincrement())
+  competitionId  Int
+  competition    Competition @relation(fields: [competitionId], references: [id])
+  teamId         Int
+  team           Team        @relation(fields: [teamId], references: [id])
+  season         Int
+  position       Int
+  played         Int
+  won            Int
+  drawn          Int
+  lost           Int
+  goalsFor       Int
+  goalsAgainst   Int
+  points         Int
+
+  @@unique([competitionId, teamId, season])
+}
