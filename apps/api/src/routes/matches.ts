@@ -31,13 +31,17 @@ matchesRouter.get(
   }),
 );
 
-// GET /api/matches?date=2026-10-17&competition=PL&status=FINISHED
+// GET /api/matches?date=2026-10-17&competition=PL&status=FINISHED&order=desc&limit=8
 matchesRouter.get(
   "/",
   wrap(async (req, res) => {
     const dateParam = queryString(req.query.date);
     const competition = queryString(req.query.competition)?.toUpperCase();
     const statusParam = queryString(req.query.status)?.toUpperCase();
+    const order = queryString(req.query.order)?.toLowerCase() === "desc" ? "desc" : "asc";
+    const limitParam = Number(queryString(req.query.limit));
+    const limit =
+      Number.isInteger(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 200;
 
     if (dateParam && !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
       res.status(400).json({ error: "date must look like 2026-10-17" });
@@ -64,13 +68,13 @@ matchesRouter.get(
       ...(start && end ? { kickoffAt: { gte: start, lt: end } } : {}),
     };
 
-    const key = `matches:${date ?? "any"}:${competition ?? "all"}:${status ?? "any"}`;
+    const key = `matches:${date ?? "any"}:${competition ?? "all"}:${status ?? "any"}:${order}:${limit}`;
     const { data, hit } = await cached(key, 15, () =>
       prisma.match.findMany({
         where,
         include: matchInclude,
-        orderBy: { kickoffAt: "asc" },
-        take: 200,
+        orderBy: { kickoffAt: order },
+        take: limit,
       }),
     );
     res.set("X-Cache", hit ? "HIT" : "MISS").json(data);
