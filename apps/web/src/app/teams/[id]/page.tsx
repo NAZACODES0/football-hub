@@ -1,5 +1,7 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { apiGet } from "@/lib/api";
 import type { Match, TeamDetail } from "@/lib/types";
 import { Crest } from "@/components/Crest";
@@ -15,12 +17,38 @@ function Stat({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+const getTeam = cache((id: string) => apiGet<TeamDetail>(`/api/teams/${id}`));
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  if (!/^\d+$/.test(id)) return { title: "Team not found" };
+
+  const team = await getTeam(id);
+  if (!team) return { title: "Team not found" };
+
+  const s = team.standings[0];
+  const description = s
+    ? `${team.name} fixtures, results and form. Currently #${s.position} in the ${s.competition.name} with ${s.points} points.`
+    : `${team.name} fixtures and results.`;
+
+  return {
+    title: team.name,
+    description,
+    alternates: { canonical: `/teams/${id}` },
+    openGraph: { title: team.name, description },
+  };
+}
+
 export default async function TeamPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
 
   const [team, upcoming, recent] = await Promise.all([
-    apiGet<TeamDetail>(`/api/teams/${id}`),
+    getTeam(id),
     apiGet<Match[]>(`/api/matches?team=${id}&status=SCHEDULED&limit=5`),
     apiGet<Match[]>(`/api/matches?team=${id}&status=FINISHED&order=desc&limit=5`),
   ]);
@@ -76,3 +104,4 @@ export default async function TeamPage({ params }: { params: Promise<{ id: strin
     </>
   );
 }
+

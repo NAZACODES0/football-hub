@@ -1,4 +1,6 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { apiGet } from "@/lib/api";
 import type { Broadcaster, MatchDetail } from "@/lib/types";
 import { Scoreboard } from "@/components/Scoreboard";
@@ -23,11 +25,41 @@ const EVENT_LABELS: Record<string, string> = {
   SUBSTITUTION: "Substitution",
 };
 
+const getMatch = cache((id: string) => apiGet<MatchDetail>(`/api/matches/${id}`));
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  if (!/^\d+$/.test(id)) return { title: "Match not found" };
+
+  const match = await getMatch(id);
+  if (!match) return { title: "Match not found" };
+
+  const home = match.homeTeam.shortName ?? match.homeTeam.name;
+  const away = match.awayTeam.shortName ?? match.awayTeam.name;
+  const score =
+    match.homeScore !== null && match.awayScore !== null
+      ? `${match.homeScore}-${match.awayScore}`
+      : "vs";
+  const title = `${home} ${score} ${away}`;
+  const description = `${home} vs ${away} in the ${match.competition.name}: live score, status, highlights and where to watch.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/matches/${id}` },
+    openGraph: { title, description },
+  };
+}
+
 export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   if (!/^\d+$/.test(id)) notFound();
 
-  const match = await apiGet<MatchDetail>(`/api/matches/${id}`);
+  const match = await getMatch(id);
   if (!match) notFound();
 
   const code = match.competition.code;
@@ -67,3 +99,4 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
     </>
   );
 }
+

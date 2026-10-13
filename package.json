@@ -6,6 +6,7 @@
     "dev:api": "pnpm --filter api dev",
     "sync": "pnpm --filter api exec tsx src/sync/run.ts",
     "worker": "pnpm --filter api exec tsx src/worker.ts",
+    "test": "pnpm --filter api exec vitest run",
     "format": "prettier --write ."
   },
   "devDependencies": {

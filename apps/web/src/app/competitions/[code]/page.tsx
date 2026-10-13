@@ -1,9 +1,36 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { apiGet } from "@/lib/api";
 import type { Match, StandingsResponse } from "@/lib/types";
 import { Crest } from "@/components/Crest";
 import { MatchSection } from "@/components/MatchSection";
+
+const getStandings = cache((code: string) =>
+  apiGet<StandingsResponse>(`/api/competitions/${encodeURIComponent(code.toUpperCase())}/standings`),
+);
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  const data = await getStandings(code);
+  if (!data) return { title: "Competition not found" };
+
+  const season = data.season ? ` ${data.season}/${String(data.season + 1).slice(2)}` : "";
+  const title = `${data.competition.name} table${season}`;
+  const description = `${data.competition.name} standings, results and upcoming fixtures.`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: `/competitions/${code.toUpperCase()}` },
+    openGraph: { title, description },
+  };
+}
 
 export default async function CompetitionPage({
   params,
@@ -14,7 +41,7 @@ export default async function CompetitionPage({
   const upper = encodeURIComponent(code.toUpperCase());
 
   const [data, upcoming, recent] = await Promise.all([
-    apiGet<StandingsResponse>(`/api/competitions/${upper}/standings`),
+    getStandings(code),
     apiGet<Match[]>(`/api/matches?competition=${upper}&status=SCHEDULED&limit=6`),
     apiGet<Match[]>(`/api/matches?competition=${upper}&status=FINISHED&order=desc&limit=6`),
   ]);
@@ -84,3 +111,4 @@ export default async function CompetitionPage({
     </>
   );
 }
+
