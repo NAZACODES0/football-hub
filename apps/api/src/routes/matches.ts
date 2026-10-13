@@ -31,7 +31,7 @@ matchesRouter.get(
   }),
 );
 
-// GET /api/matches?date=2026-10-17&competition=PL&status=FINISHED&order=desc&limit=8
+// GET /api/matches?date=2026-10-17&competition=PL&status=FINISHED&team=3,5&order=desc&limit=8
 matchesRouter.get(
   "/",
   wrap(async (req, res) => {
@@ -42,6 +42,11 @@ matchesRouter.get(
     const limitParam = Number(queryString(req.query.limit));
     const limit =
       Number.isInteger(limitParam) && limitParam > 0 ? Math.min(limitParam, 200) : 200;
+    const teamIds = (queryString(req.query.team) ?? "")
+      .split(",")
+      .map((s) => Number(s))
+      .filter((n) => Number.isInteger(n) && n > 0)
+      .slice(0, 20);
 
     if (dateParam && !/^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
       res.status(400).json({ error: "date must look like 2026-10-17" });
@@ -53,8 +58,10 @@ matchesRouter.get(
     }
     const status = statusParam as Status | undefined;
 
-    // With no date and no status, default to today's matches (UTC).
-    const date = dateParam ?? (status ? undefined : new Date().toISOString().slice(0, 10));
+    // With no date, status or team filter, default to today's matches (UTC).
+    const date =
+      dateParam ??
+      (status || teamIds.length > 0 ? undefined : new Date().toISOString().slice(0, 10));
     const start = date ? new Date(`${date}T00:00:00.000Z`) : undefined;
     if (start && Number.isNaN(start.getTime())) {
       res.status(400).json({ error: "invalid date" });
@@ -66,9 +73,12 @@ matchesRouter.get(
       ...(competition ? { competition: { code: competition } } : {}),
       ...(status ? { status } : {}),
       ...(start && end ? { kickoffAt: { gte: start, lt: end } } : {}),
+      ...(teamIds.length > 0
+        ? { OR: [{ homeTeamId: { in: teamIds } }, { awayTeamId: { in: teamIds } }] }
+        : {}),
     };
 
-    const key = `matches:${date ?? "any"}:${competition ?? "all"}:${status ?? "any"}:${order}:${limit}`;
+    const key = `matches:${date ?? "any"}:${competition ?? "all"}:${status ?? "any"}:${teamIds.join("+") || "any"}:${order}:${limit}`;
     const { data, hit } = await cached(key, 15, () =>
       prisma.match.findMany({
         where,
@@ -95,7 +105,8 @@ matchesRouter.get(
       prisma.match.findUnique({
         where: { id },
         include: {
-          ...matchInclude, highlights: { orderBy: { createdAt: "asc" } },
+          ...matchInclude,
+          highlights: { orderBy: { createdAt: "asc" } },
           events: {
             orderBy: { minute: "asc" },
             include: { team: { select: { id: true, shortName: true } } },

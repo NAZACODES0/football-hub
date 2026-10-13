@@ -9,14 +9,16 @@ export function Crest({
   size?: number;
 }) {
   if (!src) {
-    return <div style={{ width: size, height: size }} className="rounded-full bg-slate-700" />;
+    return (
+      <div style={{ width: size, height: size }} className="shrink-0 rounded-full bg-slate-700" />
+    );
   }
   return (
     <img
       src={src}
       alt={alt}
       style={{ width: size, height: size }}
-      className="object-contain"
+      className="shrink-0 object-contain"
     />
   );
 }

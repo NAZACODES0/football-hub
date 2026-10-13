@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import type { Match, StandingsResponse } from "@/lib/types";
@@ -19,7 +20,9 @@ export default async function CompetitionPage({
   ]);
   if (!data) notFound();
 
-  const th = "px-3 py-2";
+  const th = "px-2 py-2 sm:px-3";
+  const td = "px-2 py-2 sm:px-3";
+  const hideOnPhone = "hidden sm:table-cell";
 
   return (
     <>
@@ -40,8 +43,8 @@ export default async function CompetitionPage({
               <th className={th}>W</th>
               <th className={th}>D</th>
               <th className={th}>L</th>
-              <th className={th}>GF</th>
-              <th className={th}>GA</th>
+              <th className={`${th} ${hideOnPhone}`}>GF</th>
+              <th className={`${th} ${hideOnPhone}`}>GA</th>
               <th className={th}>GD</th>
               <th className={th}>Pts</th>
             </tr>
@@ -51,21 +54,24 @@ export default async function CompetitionPage({
               const gd = row.goalsFor - row.goalsAgainst;
               return (
                 <tr key={row.id} className="border-t border-slate-800">
-                  <td className="px-3 py-2 text-slate-400">{row.position}</td>
-                  <td className="px-3 py-2">
-                    <span className="flex items-center gap-2">
+                  <td className={`${td} text-slate-400`}>{row.position}</td>
+                  <td className={td}>
+                    <Link
+                      href={`/teams/${row.team.id}`}
+                      className="flex items-center gap-2 hover:text-emerald-400"
+                    >
                       <Crest src={row.team.crestUrl} alt={row.team.name} size={22} />
                       <span className="font-medium">{row.team.shortName ?? row.team.name}</span>
-                    </span>
+                    </Link>
                   </td>
-                  <td className="px-3 py-2">{row.played}</td>
-                  <td className="px-3 py-2">{row.won}</td>
-                  <td className="px-3 py-2">{row.drawn}</td>
-                  <td className="px-3 py-2">{row.lost}</td>
-                  <td className="px-3 py-2">{row.goalsFor}</td>
-                  <td className="px-3 py-2">{row.goalsAgainst}</td>
-                  <td className="px-3 py-2">{gd > 0 ? `+${gd}` : gd}</td>
-                  <td className="px-3 py-2 font-bold">{row.points}</td>
+                  <td className={td}>{row.played}</td>
+                  <td className={td}>{row.won}</td>
+                  <td className={td}>{row.drawn}</td>
+                  <td className={td}>{row.lost}</td>
+                  <td className={`${td} ${hideOnPhone}`}>{row.goalsFor}</td>
+                  <td className={`${td} ${hideOnPhone}`}>{row.goalsAgainst}</td>
+                  <td className={td}>{gd > 0 ? `+${gd}` : gd}</td>
+                  <td className={`${td} font-bold`}>{row.points}</td>
                 </tr>
               );
             })}

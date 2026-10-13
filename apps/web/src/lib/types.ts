@@ -83,3 +83,20 @@ export interface Broadcaster {
   country: string;
   url: string;
 }
+
+export interface TeamStanding {
+  season: number;
+  position: number;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  points: number;
+  competition: { name: string; code: string | null };
+}
+
+export interface TeamDetail extends Team {
+  standings: TeamStanding[];
+}
