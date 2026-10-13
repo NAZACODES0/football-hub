@@ -27,14 +27,15 @@ enum EventType {
 }
 
 model Competition {
-  id         Int        @id @default(autoincrement())
-  externalId Int        @unique
-  name       String
-  code       String?
-  country    String?
-  logoUrl    String?
-  matches    Match[]
-  standings  Standing[]
+  id           Int           @id @default(autoincrement())
+  externalId   Int           @unique
+  name         String
+  code         String?
+  country      String?
+  logoUrl      String?
+  matches      Match[]
+  standings    Standing[]
+  broadcasters Broadcaster[]
 }
 
 model Team {
@@ -50,20 +51,21 @@ model Team {
 }
 
 model Match {
-  id            Int          @id @default(autoincrement())
-  externalId    Int          @unique
+  id            Int              @id @default(autoincrement())
+  externalId    Int              @unique
   competitionId Int
-  competition   Competition  @relation(fields: [competitionId], references: [id])
+  competition   Competition      @relation(fields: [competitionId], references: [id])
   homeTeamId    Int
-  homeTeam      Team         @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  homeTeam      Team             @relation("HomeTeam", fields: [homeTeamId], references: [id])
   awayTeamId    Int
-  awayTeam      Team         @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  awayTeam      Team             @relation("AwayTeam", fields: [awayTeamId], references: [id])
   kickoffAt     DateTime
-  status        MatchStatus  @default(SCHEDULED)
+  status        MatchStatus      @default(SCHEDULED)
   homeScore     Int?
   awayScore     Int?
   minute        Int?
   events        MatchEvent[]
+  highlights    MatchHighlight[]
 
   @@index([kickoffAt])
   @@index([status])
@@ -84,20 +86,43 @@ model MatchEvent {
 }
 
 model Standing {
-  id             Int         @id @default(autoincrement())
-  competitionId  Int
-  competition    Competition @relation(fields: [competitionId], references: [id])
-  teamId         Int
-  team           Team        @relation(fields: [teamId], references: [id])
-  season         Int
-  position       Int
-  played         Int
-  won            Int
-  drawn          Int
-  lost           Int
-  goalsFor       Int
-  goalsAgainst   Int
-  points         Int
+  id            Int         @id @default(autoincrement())
+  competitionId Int
+  competition   Competition @relation(fields: [competitionId], references: [id])
+  teamId        Int
+  team          Team        @relation(fields: [teamId], references: [id])
+  season        Int
+  position      Int
+  played        Int
+  won           Int
+  drawn         Int
+  lost          Int
+  goalsFor      Int
+  goalsAgainst  Int
+  points        Int
 
   @@unique([competitionId, teamId, season])
+}
+
+model Broadcaster {
+  id            Int          @id @default(autoincrement())
+  name          String
+  country       String
+  url           String
+  competitionId Int?
+  competition   Competition? @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+
+  @@index([country])
+  @@index([competitionId])
+}
+
+model MatchHighlight {
+  id             Int      @id @default(autoincrement())
+  matchId        Int
+  match          Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  youtubeVideoId String
+  title          String?
+  createdAt      DateTime @default(now())
+
+  @@unique([matchId, youtubeVideoId])
 }

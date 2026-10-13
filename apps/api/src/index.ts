@@ -4,6 +4,8 @@ import express from "express";
 import cors from "cors";
 import { competitionsRouter } from "./routes/competitions";
 import { matchesRouter } from "./routes/matches";
+import { broadcastersRouter } from "./routes/broadcasters";
+import { adminRouter } from "./routes/admin";
 import { devRouter } from "./routes/dev";
 import { initSocket } from "./lib/socket";
 import { startLivePolling } from "./live/livePoller";
@@ -20,6 +22,8 @@ app.get("/health", (_req, res) => {
 
 app.use("/api/competitions", competitionsRouter);
 app.use("/api/matches", matchesRouter);
+app.use("/api/broadcasters", broadcastersRouter);
+app.use("/api/admin", adminRouter);
 
 if (process.env.NODE_ENV !== "production") {
   app.use("/dev", devRouter);

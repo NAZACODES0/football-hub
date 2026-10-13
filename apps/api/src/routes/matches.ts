@@ -95,7 +95,7 @@ matchesRouter.get(
       prisma.match.findUnique({
         where: { id },
         include: {
-          ...matchInclude,
+          ...matchInclude, highlights: { orderBy: { createdAt: "asc" } },
           events: {
             orderBy: { minute: "asc" },
             include: { team: { select: { id: true, shortName: true } } },

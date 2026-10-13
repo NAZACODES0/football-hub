@@ -41,7 +41,7 @@ export interface MatchEvent {
 }
 
 export interface MatchDetail extends Match {
-  events: MatchEvent[];
+  events: MatchEvent[]; highlights: Highlight[];
 }
 
 export interface StandingRow {
@@ -69,4 +69,17 @@ export interface MatchUpdate {
   homeScore: number | null;
   awayScore: number | null;
   minute: number | null;
+}
+
+export interface Highlight {
+  id: number;
+  youtubeVideoId: string;
+  title: string | null;
+}
+
+export interface Broadcaster {
+  id: number;
+  name: string;
+  country: string;
+  url: string;
 }

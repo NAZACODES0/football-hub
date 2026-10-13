@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { apiGet } from "@/lib/api";
-import type { MatchDetail } from "@/lib/types";
+import type { Broadcaster, MatchDetail } from "@/lib/types";
 import { Scoreboard } from "@/components/Scoreboard";
+import { Highlights } from "@/components/Highlights";
+import { WhereToWatch } from "@/components/WhereToWatch";
 
 const EVENT_ICONS: Record<string, string> = {
   GOAL: "\u26BD",
@@ -28,9 +30,18 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
   const match = await apiGet<MatchDetail>(`/api/matches/${id}`);
   if (!match) notFound();
 
+  const code = match.competition.code;
+  const broadcasters = code
+    ? ((await apiGet<Broadcaster[]>(`/api/broadcasters?competition=${encodeURIComponent(code)}`)) ??
+      [])
+    : [];
+
   return (
     <>
       <Scoreboard match={match} />
+
+      <Highlights highlights={match.highlights} />
+      <WhereToWatch broadcasters={broadcasters} />
 
       <h2 className="mb-3 mt-8 text-lg font-semibold">Match events</h2>
       {match.events.length === 0 ? (
