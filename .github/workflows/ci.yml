@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    # Placeholder values: the tests never talk to a real database or the football API.
+    env:
+      DATABASE_URL: postgresql://football:football@localhost:5432/football_hub
+      REDIS_URL: redis://localhost:6379
+      ADMIN_TOKEN: ci-test-token-not-a-secret
+      FOOTBALL_DATA_API_KEY: ci-placeholder
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
+      - name: Install pnpm
+        run: npm install -g pnpm@12
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate the Prisma client
+        run: pnpm --filter api exec prisma generate
+
+      - name: Run tests
+        run: pnpm test

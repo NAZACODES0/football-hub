@@ -5,6 +5,6 @@ allowBuilds:
   sharp: false
   unrs-resolver: false
   esbuild: true
+  prisma: true
+  "@prisma/engines": true
   workerd: false
-  '@prisma/engines': set this to true or false
-  prisma: set this to true or false
