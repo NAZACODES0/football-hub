@@ -4,7 +4,8 @@ import { broadcastMatchUpdate } from "../lib/socket";
 import { invalidateMatch } from "../lib/invalidate";
 import { mapStatus } from "../sync/syncCompetition";
 
-const POLL_INTERVAL_MS = 60_000;
+const ACTIVE_DELAY_MS = 60_000; // a match is in play or about to start
+const IDLE_DELAY_MS = 10 * 60_000; // nothing on: check rarely (must stay below the 15 minute look-ahead)
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
 
@@ -29,7 +30,7 @@ async function activeCompetitionCodes(): Promise<string[]> {
   return [...new Set(codes)];
 }
 
-export async function pollLiveMatches(): Promise<number> {
+export async function pollLiveMatches(): Promise<{ active: boolean; changed: number }> {
   const codes = await activeCompetitionCodes();
   let changed = 0;
 
@@ -40,7 +41,7 @@ export async function pollLiveMatches(): Promise<number> {
 
     for (const m of matches) {
       const existing = await prisma.match.findUnique({ where: { externalId: m.id } });
-      if (!existing) continue; // new fixtures are added by the daily sync
+      if (!existing) continue; // new fixtures are added by the scheduled sync
 
       const status = mapStatus(m.status);
       const homeScore = m.score.fullTime.home;
@@ -72,26 +73,22 @@ export async function pollLiveMatches(): Promise<number> {
       );
     }
   }
-  return changed;
+  return { active: codes.length > 0, changed };
 }
 
 export function startLivePolling() {
-  let running = false;
-
-  const tick = async () => {
-    if (running) return; // never overlap two polls
-    running = true;
+  const loop = async () => {
+    let delay = ACTIVE_DELAY_MS;
     try {
-      const n = await pollLiveMatches();
-      if (n > 0) console.log(`Live poll: ${n} match(es) updated`);
+      const { active, changed } = await pollLiveMatches();
+      if (changed > 0) console.log(`Live poll: ${changed} match(es) updated`);
+      if (!active) delay = IDLE_DELAY_MS;
     } catch (e) {
       console.error("Live poll failed:", (e as Error).message);
-    } finally {
-      running = false;
     }
+    setTimeout(loop, delay);
   };
 
-  void tick();
-  setInterval(tick, POLL_INTERVAL_MS);
-  console.log("Live polling started: checks every 60s, calls the data API only while matches are in play");
+  void loop();
+  console.log("Live polling started: every 60s while matches are on, every 10 min otherwise");
 }

@@ -1,5 +1,6 @@
 import type { Server as HttpServer } from "http";
 import { Server } from "socket.io";
+import { allowedOrigins } from "./origins";
 
 export interface MatchUpdate {
   id: number;
@@ -12,7 +13,7 @@ export interface MatchUpdate {
 let io: Server | null = null;
 
 export function initSocket(server: HttpServer): Server {
-  io = new Server(server, { cors: { origin: "http://localhost:3000" } });
+  io = new Server(server, { cors: { origin: allowedOrigins() } });
 
   io.on("connection", (socket) => {
     // Clients join "live" (all matches) or "match:<id>" (one match).

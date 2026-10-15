@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import express from "express";
 import cors from "cors";
+import { allowedOrigins } from "./lib/origins";
 import { competitionsRouter } from "./routes/competitions";
 import { matchesRouter } from "./routes/matches";
 import { teamsRouter } from "./routes/teams";
@@ -11,7 +12,7 @@ import { devRouter } from "./routes/dev";
 dotenv.config({ path: "../../.env" });
 
 export const app = express();
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({ origin: allowedOrigins() }));
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
