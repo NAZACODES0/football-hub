@@ -1,5 +1,7 @@
 # Football Hub
 
+Live demo: https://football-hub-rust.vercel.app
+
 A football live scores, fixtures, standings and highlights website. Scores update live in the browser without a refresh.
 
 It deliberately does not stream or link to unlicensed match streams. Data comes from the football-data.org API, highlights are embedded from official YouTube channels, and a "where to watch" box links to official broadcasters.
@@ -61,3 +63,4 @@ Open http://localhost:3000. The admin page is at /admin and needs the ADMIN_TOKE
 - GET /api/matches (filters: date, competition, status, team, order, limit), GET /api/matches/live and GET /api/matches/:id
 - GET /api/teams/:id and GET /api/broadcasters?competition=PL
 - /api/admin/* needs the header "Authorization: Bearer <ADMIN_TOKEN>"
+
