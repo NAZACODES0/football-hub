@@ -8,3 +8,13 @@ export async function invalidateMatch(id: number) {
     // Redis down: the short cache TTLs will catch up on their own
   }
 }
+
+// After a sync, forget the cached league list and standings.
+export async function invalidateCompetitionCaches() {
+  try {
+    const keys = [...(await redis.keys("competitions*")), ...(await redis.keys("standings:*"))];
+    if (keys.length > 0) await redis.del(...keys);
+  } catch {
+    // Redis down: the cache TTLs will catch up on their own
+  }
+}

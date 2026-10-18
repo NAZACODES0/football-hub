@@ -1,4 +1,5 @@
 import { syncCompetition } from "./syncCompetition";
+import { invalidateCompetitionCaches } from "../lib/invalidate";
 
 // Syncs each competition in turn. One failing league does not stop the others.
 export async function syncAll(codes: string[]) {
@@ -17,6 +18,8 @@ export async function syncAll(codes: string[]) {
       console.error(`Sync failed for ${code}:`, (e as Error).message);
     }
   }
+
+  await invalidateCompetitionCaches();
 
   if (failed.length > 0) {
     throw new Error(`These competitions failed to sync: ${failed.join(", ")}`);

@@ -9,7 +9,7 @@ export const competitionsRouter = Router();
 competitionsRouter.get(
   "/",
   wrap(async (_req, res) => {
-    const { data, hit } = await cached("competitions", 3600, () =>
+    const { data, hit } = await cached("competitions:list", 300, () =>
       prisma.competition.findMany({ orderBy: { name: "asc" } }),
     );
     res.set("X-Cache", hit ? "HIT" : "MISS").json(data);
@@ -63,3 +63,4 @@ competitionsRouter.get(
     res.set("X-Cache", hit ? "HIT" : "MISS").json(data);
   }),
 );
+
