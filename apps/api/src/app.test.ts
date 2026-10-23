@@ -53,3 +53,15 @@ describe("API", () => {
     expect([401, 503]).toContain(res.status);
   });
 });
+
+describe("accounts", () => {
+  it("asks for sign-in on the favorites list", async () => {
+    const res = await request(app).get("/api/me/favorites");
+    expect(res.status).toBe(401);
+  });
+
+  it("asks for sign-in before adding a favorite", async () => {
+    const res = await request(app).put("/api/me/favorites/1");
+    expect(res.status).toBe(401);
+  });
+});
