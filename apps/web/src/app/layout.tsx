@@ -4,6 +4,8 @@ import "./globals.css";
 import { apiGet } from "@/lib/api";
 import { SITE_URL } from "@/lib/site";
 import type { Competition } from "@/lib/types";
+import { AuthButton } from "@/components/AuthButton";
+import { FavoritesSync } from "@/components/FavoritesSync";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -23,6 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en">
       <body>
+        <FavoritesSync />
         <header className="border-b border-slate-800 bg-slate-900">
           <nav className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3">
             <Link href="/" className="text-lg font-bold text-emerald-400">
@@ -39,9 +42,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                   {c.name}
                 </Link>
               ))}
-            <Link href="/favorites" className="ml-auto text-sm text-amber-300 hover:text-amber-200">
-              {"\u2605"} Favorites
-            </Link>
+            <div className="ml-auto flex items-center gap-5">
+              <Link href="/favorites" className="text-sm text-amber-300 hover:text-amber-200">
+                {"\u2605"} Favorites
+              </Link>
+              <AuthButton />
+            </div>
           </nav>
         </header>
         <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
@@ -50,4 +56,5 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   );
 }
 
+// Give the first request after the API has been asleep time to wait for it.
 export const maxDuration = 60;

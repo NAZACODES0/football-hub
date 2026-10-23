@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { pushFavorite } from "./favoritesApi";
 
 export interface FavoriteTeam {
   id: number;
@@ -59,6 +60,15 @@ function subscribe(callback: () => void) {
   };
 }
 
+// Used by the sync code and by sign-out.
+export function getLocalFavorites(): FavoriteTeam[] {
+  return read();
+}
+
+export function replaceFavorites(next: FavoriteTeam[]) {
+  write(next);
+}
+
 export function useFavorites() {
   const favorites = useSyncExternalStore(subscribe, read, () => EMPTY);
 
@@ -67,11 +77,9 @@ export function useFavorites() {
     isFavorite: (id: number) => favorites.some((f) => f.id === id),
     toggle: (team: FavoriteTeam) => {
       const current = read();
-      write(
-        current.some((f) => f.id === team.id)
-          ? current.filter((f) => f.id !== team.id)
-          : [...current, team],
-      );
+      const wasFavorite = current.some((f) => f.id === team.id);
+      write(wasFavorite ? current.filter((f) => f.id !== team.id) : [...current, team]);
+      void pushFavorite(team.id, !wasFavorite); // does nothing if signed out
     },
   };
 }

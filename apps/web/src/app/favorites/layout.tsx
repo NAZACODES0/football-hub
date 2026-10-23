@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SyncNotice } from "@/components/SyncNotice";
 
 export const metadata: Metadata = {
   title: "Favorites",
@@ -6,5 +7,10 @@ export const metadata: Metadata = {
 };
 
 export default function FavoritesLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return (
+    <>
+      <SyncNotice />
+      {children}
+    </>
+  );
 }
