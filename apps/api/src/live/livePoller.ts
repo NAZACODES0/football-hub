@@ -8,8 +8,34 @@ const ACTIVE_DELAY_MS = 60_000; // a match is in play or about to start
 const IDLE_DELAY_MS = 10 * 60_000; // nothing on: check rarely (must stay below the 15 minute look-ahead)
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
+const STALE_AFTER_MS = 4 * HOUR; // no football match is still in play this long after kickoff
 
 const isoDate = (d: Date) => d.toISOString().slice(0, 10);
+
+// Safety net: a match stuck as LIVE long after kickoff is marked finished so it stops
+// showing as live. The next sync fills in any details.
+async function closeStaleMatches(): Promise<number> {
+  const stale = await prisma.match.findMany({
+    where: {
+      status: { in: ["LIVE", "PAUSED"] },
+      kickoffAt: { lt: new Date(Date.now() - STALE_AFTER_MS) },
+    },
+  });
+
+  for (const m of stale) {
+    await prisma.match.update({ where: { id: m.id }, data: { status: "FINISHED" } });
+    await invalidateMatch(m.id);
+    broadcastMatchUpdate({
+      id: m.id,
+      status: "FINISHED",
+      homeScore: m.homeScore,
+      awayScore: m.awayScore,
+      minute: m.minute,
+    });
+    console.log(`Match ${m.id}: closed, it was still marked live long after kickoff`);
+  }
+  return stale.length;
+}
 
 // Competitions that have a match in play, or one that should be starting about now.
 async function activeCompetitionCodes(): Promise<string[]> {
@@ -20,7 +46,7 @@ async function activeCompetitionCodes(): Promise<string[]> {
         { status: { in: ["LIVE", "PAUSED"] } },
         {
           status: "SCHEDULED",
-          kickoffAt: { gte: new Date(now - 4 * HOUR), lte: new Date(now + 15 * 60 * 1000) },
+          kickoffAt: { gte: new Date(now - STALE_AFTER_MS), lte: new Date(now + 15 * 60 * 1000) },
         },
       ],
     },
@@ -31,8 +57,8 @@ async function activeCompetitionCodes(): Promise<string[]> {
 }
 
 export async function pollLiveMatches(): Promise<{ active: boolean; changed: number }> {
+  let changed = await closeStaleMatches();
   const codes = await activeCompetitionCodes();
-  let changed = 0;
 
   for (const code of codes) {
     const from = isoDate(new Date(Date.now() - DAY));
